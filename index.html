@@ -38,275 +38,285 @@
 	</table>
 </body>
 <script>
-var colors = ["#FFFFFF","#8cc540","#009f5d","#019fa0","#019fde","#007cdc","#887ddd","#cd7bdd","#ff5675","#ff1244","#ff8345","#f8bd0b","#d1d2d4"];
-var data = [];
-var result = 3;//0进行中，1失败，2成功,3锁定
-$(document).ready(function() {
-	//初始化数据
-	for(var i=0;i<16;i++)
-	{
-		data[i]=0;
-	}
-	//随机生成一个
-	produce();
 
-	//初始化显示
-	initView();
-	//显示
-	showView();
-	
-	result = 0;
-	//移动
-	$(document).keyup(move);
+$(document).ready(function() {
+	var game = new game2048();
+	game.init();
+	$(document).keyup(game.move);
 });
 
-var move = function(e)
+var game2048 = function()
 {
-	if(e.which>=37 && e.which<=40)
+	var colors = ["#FFFFFF","#8cc540","#009f5d","#019fa0","#019fde","#007cdc","#887ddd","#cd7bdd","#ff5675","#ff1244","#ff8345","#f8bd0b","#d1d2d4"];
+	
+	var data = [];
+	
+	var result = 3;//0进行中，1失败，2成功,3锁定
+	
+	this.init = function()
 	{
-		if(result==3)
+		//初始化数据
+		for(var i=0;i<16;i++)
 		{
-			return ;
+			data[i]=0;
 		}
-		
-		if(result==2)
-		{
-			alert("sucess！");	
-			return ;
-		}
-		
-		if(result==1)
-		{
-			alert("fail！");	
-			return ;
-		}
-		
-		changeData(e);
-		
+		//随机生成一个
+		produce();
+	
+		//初始化显示
+		initView();
+		//显示
 		showView();
 		
-		//锁定，等待定时器解锁
-		result = 3;
-		
-		setTimeout(function(){
-			produce();
-			showView();
-			if(result==3) result = 0;
-		},100);
-	}
-}
-
-var initView = function()
-{
-	var html = "";
-	var i = 0;
-	for(i=0;i<data.length;i++)
-	{
-		if(i%4==0)
-			html += "<tr class='map_tr'>";	
-		html += "<td id='td_id_"+i+"' class='map_td'>";
-		html += "&nbsp;";
-		html += "</td>";
-		if(i%4==3)
-			html += "</tr>";
-	}
-	$("#map_table").html(html);
-}
-
-
-var produce = function()
-{
-	var arr = [];
-	var j = 0;
-	for(var i=0;i<data.length;i++)
-	{
-		if(data[i]==0)
-		{
-			arr[j] = i;
-			j++;
-		}
-	}
+		result = 0;
+	};
 	
-	if(arr.length<=0 || data.length>16){
-		result = 1;
-		return ;
-	}
-	
-	j = Math.floor(Math.random()*arr.length);
-	var num = Math.ceil(Math.random()*2)*2;
-	i = arr[j];
-	data[i] = num;
-}
-
-var showOver = function(msg)
-{
-	alert(msg);
-}
-
-var showView = function()
-{
-	for(var i=0;i<data.length;i++)
+	this.move = function(e)
 	{
-		if(data[i]!=0)
+		if(e.which>=37 && e.which<=40)
 		{
-			for(j=0;j<colors.length;j++)
+			if(result==3)
 			{
-				if(data[i]==Math.pow(2, j))
+				return ;
+			}
+			
+			if(result==2)
+			{
+				alert("sucess！");	
+				return ;
+			}
+			
+			if(result==1)
+			{
+				alert("fail！");	
+				return ;
+			}
+			
+			changeData(e);
+			
+			showView();
+			
+			//锁定，等待定时器解锁
+			result = 3;
+			
+			setTimeout(function(){
+				produce();
+				showView();
+				if(result==3) result = 0;
+			},100);
+		}
+	};
+
+	var initView = function()
+	{
+		var html = "";
+		var i = 0;
+		for(i=0;i<data.length;i++)
+		{
+			if(i%4==0)
+				html += "<tr class='map_tr'>";	
+			html += "<td id='td_id_"+i+"' class='map_td'>";
+			html += "&nbsp;";
+			html += "</td>";
+			if(i%4==3)
+				html += "</tr>";
+		}
+		$("#map_table").html(html);
+	};
+
+	var produce = function()
+	{
+		var arr = [];
+		var j = 0;
+		for(var i=0;i<data.length;i++)
+		{
+			if(data[i]==0)
+			{
+				arr[j] = i;
+				j++;
+			}
+		}
+		
+		if(arr.length<=0 || data.length>16){
+			result = 1;
+			return ;
+		}
+		
+		j = Math.floor(Math.random()*arr.length);
+		var num = Math.ceil(Math.random()*2)*2;
+		i = arr[j];
+		data[i] = num;
+	};
+
+	var showOver = function(msg)
+	{
+		alert(msg);
+	};
+
+	var showView = function()
+	{
+		for(var i=0;i<data.length;i++)
+		{
+			if(data[i]!=0)
+			{
+				for(j=0;j<colors.length;j++)
 				{
-					$("#td_id_"+i).css("background-color",colors[j]);
+					if(data[i]==Math.pow(2, j))
+					{
+						$("#td_id_"+i).css("background-color",colors[j]);
+					}
+				}
+				$("#td_id_"+i).html(data[i]);
+			} 
+			else 
+			{
+				$("#td_id_"+i).css("background-color","#FFFFFF");
+				$("#td_id_"+i).html("&nbsp;");
+			}
+			
+		}
+	};
+
+	var changeData = function(e) {
+		//左
+		if(e.which==37)
+		{
+			for(var i=15;i>=0;i-=4)
+			{
+				_change(i,1,i-4,1);
+			}
+		}
+		// 上
+		else if(e.which==38)
+		{
+			for(var i=15;i>=12;i--)
+			{
+				_change(i,1,-1,4);
+			}
+		}
+		//右
+		else if(e.which==39)
+		{
+			for(var i=0;i<data.length;i+=4)
+			{
+				_change(i,2,i+4,1);
+			}
+		}
+		//下
+		else if(e.which==40)
+		{
+			for(var i=0;i<4;i++)
+			{
+				_change(i,2,data.length,4);
+			}
+		}
+		return ;
+	};
+
+	var _change = function(start,type,limit,gap)
+	{
+		//把不等于0的放到临时数组里面
+		var arr = [];
+		var k = 0;
+		j=start;
+		while((type==1 && j>limit) || (type==2 && j<limit)){
+			
+			if(data[j]!=0)
+			{
+				arr[k++]=data[j];
+			}
+			
+			if(type==1)
+				j-=gap;
+			else
+				j+=gap;
+		}
+		
+		if(arr.length<=0) return ;
+		
+		//将相等的数字合并
+		for(k=0;k<arr.length-1;k++)
+		{
+			if(arr[k+1]!=0 && arr[k]==arr[k+1])
+			{
+				arr[k+1] = arr[k+1]+arr[k];	
+				arr[k] = 0;
+				k++;
+			}
+		}
+		//print_arr("start...k:"+k+"........",arr);
+		
+		//alert("length:"+arr.length+"arr[0]"+arr[0]);
+		//将合并产生的空格移到最前面
+		
+		for(k=arr.length-1;k>=0;k--)
+		{
+			if(arr[k]!=0) continue;
+			
+			for(i=k-1;i>=0;i--)
+			{
+				if(arr[i]!=0)
+				{
+					tmp = arr[i];
+					arr[i] = arr[k];
+					arr[k] = tmp;
+					break;
 				}
 			}
-			$("#td_id_"+i).html(data[i]);
-		} 
-		else 
-		{
-			$("#td_id_"+i).css("background-color","#FFFFFF");
-			$("#td_id_"+i).html("&nbsp;");
 		}
 		
-	}
-}
-
-var changeData = function(e) {
-	//左
-	if(e.which==37)
-	{
-		for(var i=15;i>=0;i-=4)
+		while(k>0)
 		{
-			_change(i,1,i-4,1);
-		}
-	}
-	// 上
-	else if(e.which==38)
-	{
-		for(var i=15;i>=12;i--)
-		{
-			_change(i,1,-1,4);
-		}
-	}
-	//右
-	else if(e.which==39)
-	{
-		for(var i=0;i<data.length;i+=4)
-		{
-			_change(i,2,i+4,1);
-		}
-	}
-	//下
-	else if(e.which==40)
-	{
-		for(var i=0;i<4;i++)
-		{
-			_change(i,2,data.length,4);
-		}
-	}
-	return ;
-}
-
-var _change = function(start,type,limit,gap)
-{
-	//把不等于0的放到临时数组里面
-	var arr = [];
-	var k = 0;
-	j=start;
-	while((type==1 && j>limit) || (type==2 && j<limit)){
-		
-		if(data[j]!=0)
-		{
-			arr[k++]=data[j];
+			tmp = arr[k-1];
+			arr[k-1] = arr[k];
+			arr[k] = tmp;
+			k--;
 		}
 		
-		if(type==1)
-			j-=gap;
-		else
-			j+=gap;
-	}
-	
-	if(arr.length<=0) return ;
-	
-	//将相等的数字合并
-	for(k=0;k<arr.length-1;k++)
-	{
-		if(arr[k+1]!=0 && arr[k]==arr[k+1])
-		{
-			arr[k+1] = arr[k+1]+arr[k];	
-			arr[k] = 0;
-			k++;
-		}
-	}
-	//print_arr("start...k:"+k+"........",arr);
-	
-	//alert("length:"+arr.length+"arr[0]"+arr[0]);
-	//将合并产生的空格移到最前面
-	
-	for(k=arr.length-1;k>=0;k--)
-	{
-		if(arr[k]!=0) continue;
+		//print_arr("end...k:"+k+"........",arr);
 		
-		for(i=k-1;i>=0;i--)
+		//alert("length:"+arr.length+"arr[0]"+arr[0]);
+		
+		//将数组重组
+		k=0;
+		l=0;
+		j=start;
+		while((type==1 && j>limit) || (type==2 && j<limit))
 		{
-			if(arr[i]!=0)
+			
+			if(k<4-arr.length)
 			{
-				tmp = arr[i];
-				arr[i] = arr[k];
-				arr[k] = tmp;
-				break;
+				data[j] = 0;		
+				k++;
 			}
+			else{
+				data[j] = arr[l];
+				l++;		
+			}
+			
+			//alert(data[j]);
+			
+			if(data[j]==2048)
+			{
+				result = 2;	
+			}
+			
+			if(type==1)
+				j-=gap;
+			else
+				j+=gap;
 		}
-	}
-	
-	while(k>0)
-	{
-		tmp = arr[k-1];
-		arr[k-1] = arr[k];
-		arr[k] = tmp;
-		k--;
-	}
-	
-	//print_arr("end...k:"+k+"........",arr);
-	
-	//alert("length:"+arr.length+"arr[0]"+arr[0]);
-	
-	//将数组重组
-	k=0;
-	l=0;
-	j=start;
-	while((type==1 && j>limit) || (type==2 && j<limit))
-	{
-		
-		if(k<4-arr.length)
-		{
-			data[j] = 0;		
-			k++;
-		}
-		else{
-			data[j] = arr[l];
-			l++;		
-		}
-		
-		//alert(data[j]);
-		
-		if(data[j]==2048)
-		{
-			result = 2;	
-		}
-		
-		if(type==1)
-			j-=gap;
-		else
-			j+=gap;
-	}
-}
+	};
 
-var print_arr = function(pre,arr)
-{
-	var str = pre + "print:";
-	for(var i=0;i<arr.length;i++)
+	var print_arr = function(pre,arr)
 	{
-		str+=arr[i]+" ";
-	}	
-	if(arr.length>0) console.log(str);
-}
-
+		var str = pre + "print:";
+		for(var i=0;i<arr.length;i++)
+		{
+			str+=arr[i]+" ";
+		}	
+		if(arr.length>0) console.log(str);
+	};
+};
 </script>
 </html>
