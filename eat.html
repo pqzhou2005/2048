@@ -230,7 +230,6 @@ var snake = function(b)
 		if(_this.body[0].x+pos_x<0 || _this.body[0].x+pos_x>=_this.board.width
 				|| _this.body[0].y+pos_y<0 || _this.body[0].y+pos_y>=_this.board.height)
 		{
-			alert("out!");
 			return -1;	
 		}
 		
@@ -238,7 +237,6 @@ var snake = function(b)
 		{
 			if(_this.body[0].x+pos_x==_this.body[i].x && _this.body[0].y+pos_y==_this.body[i].y)
 			{
-				alert("self!");
 				return -1;
 			}
 		}
