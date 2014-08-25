@@ -1,0 +1,282 @@
+<html>
+<head>
+<script type="text/javascript" src="http://code.hs-cn.com/jquery/jquery-1.7.1.min.js"></script>
+<style type="text/css">
+    #board
+	{
+			border-collapse:collapse;
+			border-width: 1px;
+			border-style: solid;
+			border-color: #000000;
+			padding: 0px;
+			margin:auto;
+	}
+	#board tbody
+	{
+			padding:0px;
+			margin:0px;
+	}
+	#board tr
+	{
+			padding:0px;
+			margin:0px;
+	}
+	#board td
+    {
+    		margin:0px;
+    		padding:0px;
+    		border-width: 1px;
+			border-style: solid;
+			border-color: #FFFFFF;
+    		width:10px;
+    		height:10px;
+        	border-width: 0px;
+    }
+    </style>
+</head>
+<body>
+	<table id="board">
+	</table>
+</body>
+<script>
+var timer = null;
+b = null;
+s = null;
+f = null;
+
+$(document).ready(function(){
+	
+	b = new board();
+	s = new snake(b);
+	f = new food(b);
+	b.setSnake(s);//放入面板
+	b.setFood(f);//放入食物
+	
+	b.draw();//绘制面板
+	s.produce();//产生蛇
+	f.produce();//产生食物
+	
+	$(document).keyup(function(e){
+		s.changeDirect(e);
+	});
+	
+	timer = window.setInterval(function(){
+			s.run();
+		},200);
+});
+
+var board = function()
+{
+	this.width = 20;
+	
+	this.height = 20;
+	
+	this.snake; 
+	
+	this.food;
+	
+	this.setSnake = function(s)
+	{
+		this.snake = s;
+	};
+
+	this.setFood = function(f)
+	{
+		this.food = f;
+	}
+	
+	this.draw = function()
+	{
+		var html = "";
+		for(var i=0;i<this.height;i++)
+		{
+			html += "<tr>";	
+			for(var j=0;j<this.width;j++)
+			{
+				html += "<td id='td_"+j+"_"+i+"'>";
+				html += "";
+				html += "</td>";
+			}
+			html += "</tr>";
+		}
+		$("#board").html(html);
+	};
+	
+}
+
+var food = function(b)
+{
+	this.pos;
+	
+	this.board = b;
+	
+	this.produce = function()
+	{
+		var pos_arr = [];
+		var l = 0;
+		
+		for(var i=0;i<this.board.height;i++)
+		{
+			for(var j=0;j<this.board.width;j++)
+			{
+				for(var k=0;k<this.board.snake.body.length;k++)
+				{
+					if(this.board.snake.body[k].x!=i || this.board.snake.body[k].y!=j)
+					{
+						pos_arr[l] = {x:i,y:j};
+						l++;
+					}
+				}
+			}
+		}
+		var pos_index = Math.floor(Math.random()*pos_arr.length);
+		this.pos = pos_arr[pos_index];
+		
+		this.show();
+	}
+	
+	this.show = function()
+	{
+		$("#td_"+this.pos.x+"_"+this.pos.y).css("background-color","#CC0000");	
+	}
+}
+
+var snake = function(b)
+{
+	this.body = [];
+	
+	this.board = b;
+	
+	//0左，1上，2右，3下
+	this.direct = 0;
+	
+	this.is_has_food = 1;
+	
+	_this = this;
+	
+	this.produce = function()
+	{
+		var pos = {x:0,y:0};
+		pos.x = Math.floor(Math.random()*this.board.width);
+		pos.y = Math.floor(Math.random()*this.board.height);
+		
+		this.body[0] = pos;
+	
+		this.show();
+	};
+	
+	this.run = function()
+	{
+		var ret = _this.move();
+		
+		if(ret<0)
+		{
+			window.clearInterval(timer);
+			alert("die!");
+		}
+		
+		this.show();
+		
+		if(this.is_has_food==0)
+		{
+			this.board.food.produce();
+			this.is_has_food = 1;
+		}
+	}
+	
+	this.show = function()
+	{
+		for(var i=0;i<_this.body.length;i++)
+		{
+			$("#td_"+_this.body[i].x+"_"+_this.body[i].y).css("background-color","#000000");
+		}
+	};
+	
+	this.clear = function()
+	{
+		for(var i=0;i<_this.body.length;i++)
+		{
+			$("#td_"+_this.body[i].x+"_"+_this.body[i].y).css("background-color","#FFFFFF");
+		}
+	};
+	
+	this.move = function()
+	{
+		pos_x = 0;
+		pos_y = 0;
+		
+		//左
+		if(this.direct==0)
+		{
+			pos_x--;	
+		}
+		// 上
+		else if(this.direct==1)
+		{
+			pos_y--;
+		}
+		//右
+		else if(this.direct==2)
+		{
+			pos_x++;
+		}
+		//下
+		else if(this.direct==3)
+		{
+			pos_y++;
+		}
+		
+		//撞死
+		if(_this.body[0].x+pos_x<0 || _this.body[0].x+pos_x>=_this.board.width
+				|| _this.body[0].y+pos_y<0 || _this.body[0].y+pos_y>=_this.board.height)
+		{
+			alert("out!");
+			return -1;	
+		}
+		
+		for(var i=0;i<_this.body.length;i++)
+		{
+			if(_this.body[0].x+pos_x==_this.body[i].x && _this.body[i].y+pos_y==_this.body[i].y)
+			{
+				alert("self!");
+				return -1;
+			}
+		}
+		
+		_this.clear();
+		
+		//如果吃到了食物
+		if(_this.body[0].x+pos_x==_this.board.food.pos.x && _this.body[0].y+pos_y==_this.board.food.pos.y)
+		{
+			_this.body[_this.body.length]={x:0,y:0};
+			_this.is_has_food = 0;
+		}
+		
+		for(var i=_this.body.length-1;i>0;i--)
+		{
+			_this.body[i].x = _this.body[i-1].x;
+			_this.body[i].y = _this.body[i-1].y;
+		}
+		
+		_this.body[0].x+=pos_x;
+		_this.body[0].y+=pos_y;
+		
+		return 0;
+	};
+	
+	this.changeDirect = function(e)
+	{
+		if(e.which<37 || e.which>40)
+		{
+			return ;
+		}
+		var old = this.direct;
+		if(e.which - 37 - old==-2 || e.which - 37 - old==2)
+		{
+			return ;
+		}
+		this.direct = e.which - 37;
+	}
+}
+</script>
+</html>
