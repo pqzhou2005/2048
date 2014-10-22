@@ -1,0 +1,386 @@
+<html>
+<head>
+<script type="text/javascript" src="http://code.hs-cn.com/jquery/jquery-1.7.1.min.js"></script>
+<style type="text/css">
+    #board
+	{
+			border-collapse:collapse;
+			border-width: 1px;
+			border-style: solid;
+			border-color: #000000;
+			padding: 0px;
+			margin:auto;
+	}
+	#board tbody
+	{
+			padding:0px;
+			margin:0px;
+	}
+	#board tr
+	{
+			padding:0px;
+			margin:0px;
+	}
+	#board td
+    {
+    	    text-align:center;
+    		margin:0px;
+    		padding:0px;
+    		width:30px;
+    		height:30px;
+        	border-width: 0px;
+    }
+    #eliminate_form
+    {
+    		width:300px;
+			margin:auto;
+    }
+    #eliminate_form input
+    {
+			width:50px;
+    }
+    </style>
+</head>
+<body>
+	<table id="board">
+	</table>
+	<form id="eliminate_form">
+	宽：<input id="eliminate_width" type='text' value="10"/>
+	<br/>
+	高：<input id="eliminate_height" type='text' value="10"/>
+	<br/>
+	速度（毫秒/格子）：<input id="eliminate_speed" type='text' value="500"/>
+	<br/>
+	<input id="eliminate_start" type="button" value="重置"/>
+	</form>
+</body>
+<script>
+var timer = null;
+produce_count = 0;
+b = null;
+s = null;
+f = null;
+speed = 0;
+
+$(document).ready(function(){
+	b = new board();
+	s = new snake(b);
+	f = new food(b);
+	b.setSnake(s);//放入面板
+	b.setFood(f);//放入食物
+	
+	b.width = $("#eliminate_width").val();
+	b.height = $("#eliminate_height").val();
+	b.draw();//绘制面板
+	
+	$(document).keyup(function(e){
+		s.changeDirect(e);
+	});
+});
+
+$("#eliminate_start").click(function()
+{
+	window.clearInterval(timer);
+	
+	b = new board();
+	s = new snake(b);
+	f = new food(b);
+	b.setSnake(s);//放入面板
+	b.setFood(f);//放入食物
+	
+	b.width = $("#eliminate_width").val();
+	b.height = $("#eliminate_height").val();
+	b.draw();//绘制面板
+	s.produce();//产生蛇
+	f.produce();//产生食物
+	
+	speed = $("#eliminate_speed").val();
+	timer = window.setInterval(function(){
+			s.run();
+		},speed);
+});
+
+$("#eliminate_stop").click(function()
+{
+	window.clearInterval(timer);
+});
+
+var pos = function()
+{
+	this.x = 0;
+	
+	this.y = 0;
+	
+	this.value = 0;
+	
+	this.show = function(color)
+	{
+		$("#td_"+this.x+"_"+this.y).html(this.value);
+		$("#td_"+this.x+"_"+this.y).css("background-color",color);		
+	}
+	
+	this.hidden = function()
+	{
+		$("#td_"+this.x+"_"+this.y).html("");
+		$("#td_"+this.x+"_"+this.y).css("background-color","#FFFFFF");
+	}
+}
+
+var board = function()
+{
+	this.width = 10;
+	
+	this.height = 10;
+	
+	this.snake; 
+	
+	this.food;
+	
+	this.setSnake = function(s)
+	{
+		this.snake = s;
+	};
+
+	this.setFood = function(f)
+	{
+		this.food = f;
+	}
+	
+	this.draw = function()
+	{
+		var html = "";
+		for(var i=0;i<this.height;i++)
+		{
+			html += "<tr>";	
+			for(var j=0;j<this.width;j++)
+			{
+				html += "<td id='td_"+j+"_"+i+"'>";
+				html += "";
+				html += "</td>";
+			}
+			html += "</tr>";
+		}
+		$("#board").html(html);
+	};
+	
+}
+
+var food = function(b)
+{
+	this.pos;
+	
+	this.board = b;
+	
+	this.value = 0;
+	
+	this.produce = function()
+	{
+		var pos_arr = [];
+		var l = 0;
+		
+		
+		for(var i=0;i<this.board.height;i++)
+		{
+			for(var j=0;j<this.board.width;j++)
+			{
+				var is_snake_body = false;
+				for(var k=0;k<this.board.snake.body.length;k++)
+				{
+					if(this.board.snake.body[k].x==i && this.board.snake.body[k].y==j)
+					{
+						is_snake_body = true;
+						break;
+					}
+				}
+				if(is_snake_body==false){
+					pos_arr[l] = {x:i,y:j};
+					l++;
+				}
+			}
+		}
+		var pos_index = Math.floor(Math.random()*pos_arr.length);
+		this.pos = new pos();
+		this.pos.x = pos_arr[pos_index].x;
+		this.pos.y = pos_arr[pos_index].y;
+		this.pos.value = Math.ceil(Math.random()*2)*2;
+		//this.pos.value = 2;
+		this.pos.show("#CC0000");
+	}
+}
+
+var snake = function(b)
+{
+	this.body = [];
+	
+	this.board = b;
+	
+	//0左，1上，2右，3下
+	this.direct = 0;
+	
+	this.is_produce_food = false;
+	
+	this.produce = function()
+	{
+		var p = new pos();
+		p.x = Math.floor(Math.random()*this.board.width);
+		p.y = Math.floor(Math.random()*this.board.height);
+		p.value = 2;
+		this.body[0] = p;
+	
+		this.show();
+	};
+	
+	this.run = function()
+	{
+		var ret = this.move();
+		
+		if(ret<0)
+		{
+			window.clearInterval(timer);
+			alert("die!");
+		}
+		
+		this.show();
+		
+		if(this.is_produce_food)
+		{
+			produce_count++;
+			this.board.food.produce();
+			this.is_produce_food = false;
+		}
+	}
+	
+	this.show = function()
+	{
+		for(var i=0;i<this.body.length;i++)
+		{
+			if(i==0){
+				this.body[i].show("#00FFFF");
+			}else{
+				this.body[i].show("#00FFFF");
+			}
+		}
+	};
+	
+	this.clear = function()
+	{
+		for(var i=0;i<this.body.length;i++)
+		{
+			this.body[i].hidden();
+		}
+	};
+	
+	this.move = function()
+	{
+		pos_x = 0;
+		pos_y = 0;
+		
+		//左
+		if(this.direct==0)
+		{
+			pos_x--;	
+		}
+		// 上
+		else if(this.direct==1)
+		{
+			pos_y--;
+		}
+		//右
+		else if(this.direct==2)
+		{
+			pos_x++;
+		}
+		//下
+		else if(this.direct==3)
+		{
+			pos_y++;
+		}
+		
+		//撞死
+		if(this.body[0].x+pos_x<0 || this.body[0].x+pos_x>=this.board.width
+				|| this.body[0].y+pos_y<0 || this.body[0].y+pos_y>=this.board.height)
+		{
+			return -1;	
+		}
+		
+		//撞自己身上
+		for(var i=0;i<this.body.length;i++)
+		{
+			if(this.body[0].x+pos_x==this.body[i].x && this.body[0].y+pos_y==this.body[i].y)
+			{
+				return -1;
+			}
+		}
+		
+		this.clear();
+		
+		//如果吃到了食物
+		if(this.body[0].x+pos_x==this.board.food.pos.x && this.body[0].y+pos_y==this.board.food.pos.y)
+		{
+			//拼到一起
+			this.body[this.body.length] = new pos();
+			for(var i=this.body.length-1;i>0;i--)
+			{
+				this.body[i].x = this.body[i-1].x;
+				this.body[i].y = this.body[i-1].y;	
+				this.body[i].value = this.body[i-1].value;
+			}
+			
+			this.body[0].x=this.board.food.pos.x;
+			this.body[0].y=this.board.food.pos.y;
+			this.body[0].value=this.board.food.pos.value;
+		
+			//合并
+			while(1)
+			{
+				if(this.body.length<2) break;
+				
+				if(this.body[0].value==this.body[1].value)
+				{
+					this.body[0].value = this.body[0].value*2;	
+					for(i=1;i<this.body.length-1;i++)
+					{
+						this.body[i].value = this.body[i+1].value;
+					}
+					this.body.pop();
+				}
+				else
+				{
+					break;	
+				}
+			}
+			
+			this.is_produce_food = true;
+		}
+		else
+		{
+			//移动
+			for(var i=this.body.length-1;i>0;i--)
+			{
+				this.body[i].x = this.body[i-1].x;
+				this.body[i].y = this.body[i-1].y;
+			}
+			
+			this.body[0].x+=pos_x;
+			this.body[0].y+=pos_y;
+		}
+		
+		return 0;
+	};
+	
+	this.changeDirect = function(e)
+	{
+		if(e.which<37 || e.which>40)
+		{
+			return ;
+		}
+		var old = this.direct;
+		if(e.which - 37 - old==-2 || e.which - 37 - old==2)
+		{
+			return ;
+		}
+		this.direct = e.which - 37;
+	}
+}
+</script>
+</html>
